@@ -1,12 +1,12 @@
 mod note_time;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum BGAType{
     Base,
     Layer,
     Poor,
 }
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum NoteAction{
     BGAChange {bga_type: BGAType,id:u16},
     BPMChange {bpm: f64},
@@ -17,10 +17,82 @@ pub enum NoteAction{
 
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Note{
     pub note_action: NoteAction,
     pub note_time: note_time::NoteTime,
+}
+
+#[derive(Debug)]
+pub struct Notes{
+    notes: Vec<Note>,
+    note_time_map: note_time::NoteTimeMap,
+}
+
+
+
+impl Notes{
+    pub fn new(main_bpm: f64) -> Self{
+        Notes { notes: vec![] ,note_time_map: note_time::NoteTimeMap::new(main_bpm,1.0)}
+    }
+    
+    pub fn get_timesig_changes(&self) -> Vec<&Note>{
+        let mut res = vec![];
+        for i in &self.notes{
+            if let NoteAction::SigChange { length: _ } = i.note_action {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+
+    pub fn get_bpm_changes(&self) -> Vec<&Note>{
+        let mut res = vec![];
+        for i in &self.notes{
+            if let NoteAction::BPMChange { bpm: _ } = i.note_action {
+                res.push(i);
+            }
+        }
+        return res;
+    }
+
+    fn calculate_time_map(&mut self){
+        let mut time_changes = vec![];
+        for t in self.get_timesig_changes(){
+            let mut new = t.clone();
+            new.note_time.measure_notation+=1.0;
+            if let NoteAction::SigChange {length: i} = t.note_action{
+                new.note_action = NoteAction::SigChange { length: 1.0/i };
+            }
+            time_changes.push(t.clone());
+            time_changes.push(new);
+        }
+        for t in self.get_bpm_changes(){
+            time_changes.push(t.clone());
+        }
+        time_changes.sort_unstable_by(|x,y| x.note_time.partial_cmp(&y.note_time).unwrap());
+        for t in time_changes{
+            self.note_time_map.push(&t);
+        }
+    }
+
+    pub fn update_time(&mut self){
+        self.calculate_time_map();
+        for i in 0..self.notes.len(){
+            self.notes[i].note_time.real_time_ms = self.note_time_map.get(&self.notes[i].note_time);
+        }
+    }
+
+}
+
+impl IntoIterator for Notes{
+    type Item = Note;
+
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.notes.into_iter()
+    }
 }
 
 #[cfg(test)]
@@ -40,6 +112,12 @@ mod tests{
         println!("{}",time);
     }
 
+    #[test]
+    fn test_slice(){
+        
+        
+    }
+    
 
 
 }
