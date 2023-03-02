@@ -76,13 +76,16 @@ impl Notes{
         }
     }
 
+    pub fn sort(&mut self){
+        self.notes.sort_unstable_by(|x,y| x.note_time.partial_cmp(&y.note_time).unwrap());
+    }
+
     pub fn update_time(&mut self){
         self.calculate_time_map();
         for i in 0..self.notes.len(){
             self.notes[i].note_time.real_time_ms = self.note_time_map.get(&self.notes[i].note_time);
         }
     }
-
 }
 
 impl IntoIterator for Notes{
@@ -111,13 +114,6 @@ mod tests{
         let time = ntm.get(&note_time::NoteTime { measure_notation: 3.5, real_time_ms: -1.0 });
         println!("{}",time);
     }
-
-    #[test]
-    fn test_slice(){
-        
-        
-    }
-    
 
 
 }

@@ -1,7 +1,6 @@
-mod specs;
 use std::{collections::HashMap, path::PathBuf};
 
-use specs::*;
+use crate::specs::*;
 
 #[derive(Debug)]
 pub struct Header{
@@ -82,7 +81,7 @@ impl Header{
                 "4" => JudgeRank::VeryEasy,
                 _ => {return Err(ParseCommandError(format!("{} {}",command,arg)))}
             }),
-            "#PLAYLEVEL" => self.difficulty = Some(match arg.as_str(){
+            "#DIFFICULTY" => self.difficulty = Some(match arg.as_str(){
                 "1" => Difficulty::Beginner,
                 "2" => Difficulty::Normal,
                 "3" => Difficulty::Hyper,
@@ -94,6 +93,14 @@ impl Header{
                 "1" => LnType::Rdm,
                 "2" => LnType::Mgq,
                 _ => {return Err(ParseCommandError(format!("{} {}",command,arg)))}
+            }),
+            "#TOTAL" => self.total = Some(match arg.parse(){
+                Ok(f) => f,
+                _ => {return Err(ParseCommandError(format!("{} {}",command,arg)))} 
+            }),
+            "#PLAYLEVEL" => self.play_level = Some(match arg.parse() {
+                Ok(u) => u,
+                _ => {return Err(ParseCommandError(format!("{} {}",command,arg)))} 
             }),
             _ => {}
         }

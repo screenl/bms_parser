@@ -28,3 +28,9 @@ pub enum LnType{
     Rdm,
     Mgq,
 }
+
+#[derive(Debug)]
+pub enum WavFileType{
+    Wav,
+    Ogg,
+}

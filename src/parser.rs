@@ -1,18 +1,30 @@
 use std::{io::{Lines, BufReader}, fs::File, error};
 
-use crate::obj::{header::Header, note::{Note, Notes}};
+use crate::obj::{header::Header, note::Notes};
 
-
+#[derive(Debug)]
+pub struct BPMMissingError;
+impl error::Error for BPMMissingError{
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        None
+    }
+}
+impl std::fmt::Display for BPMMissingError{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f,"Missing Main BPM")
+    }
+}
 
 pub fn header_parser(input_stream: &mut Lines<BufReader<File>>) -> Result<Header, Box<dyn error::Error>>{
-    let first: String;
     let mut header = Header::new();
     while let Some(Ok(t)) = input_stream.next(){
         if t.starts_with("#"){
             if let Some((command,arg)) = t.split_once(' '){
-                header.push(command,arg);
+                if let Err(e) = header.push(command,arg){
+                    println!("{}",e);
+                }
             }
-            else if t.contains(":"){
+            else if t.contains("MAIN DATA FIELD"){
                 break;
             }
 
@@ -24,8 +36,18 @@ pub fn header_parser(input_stream: &mut Lines<BufReader<File>>) -> Result<Header
 
 
 
-pub fn body_parser(main_bpm: f64,start:String) -> Notes{
-    Notes::new(main_bpm)
+pub fn body_parser(header: &Header,input_stream: &mut Lines<BufReader<File>>) -> Result<Notes, Box<dyn error::Error>>{
+    let notes = Notes::new(header.bpm.ok_or(Box::new(BPMMissingError))?);
+    while let Some(Ok(t)) = input_stream.next(){
+        if t.starts_with("#"){
+            if let Some((indicator,serial)) = t.split_once(' '){
+                let measure_number = &indicator[1..4];
+                let track_number = &indicator[4..6];
+
+            }
+        }
+    }
+    Ok(notes)
 
 }
 
@@ -33,8 +55,5 @@ pub fn body_parser(main_bpm: f64,start:String) -> Notes{
 #[cfg(test)]
 mod tests{
     use super::*;
-    #[test]
-    fn header_test(){
 
-    }
 }

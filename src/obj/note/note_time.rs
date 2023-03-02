@@ -40,7 +40,7 @@ impl NoteTimeMap{
         }
     }
 
-    pub(crate) fn search(&self, measure:f64) -> usize{
+    pub fn search(&self, measure:f64) -> usize{
         let mut low = 0;
         let mut high = self.critical_points.len();
 

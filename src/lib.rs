@@ -2,8 +2,9 @@ use std::{error, io::BufRead};
 
 
 pub mod obj;
-
+pub mod specs;
 pub mod parser;
+
 
 
 
@@ -13,15 +14,10 @@ struct BMS{
 }
 
 impl BMS{
-    pub fn from_file(file_path: &str) -> Result<Self, Box<dyn error::Error>>{
+    pub fn load_from_file(file_path: &str) -> Result<Self, Box<dyn error::Error>>{
         let mut lines = std::io::BufReader::new(std::fs::File::open(file_path)?).lines();
-        while let Some(Ok(t)) = lines.next(){
-            if t.contains("HEADER FIELD"){
-                break;
-            }
-        }
         let header = parser::header_parser(&mut lines)?;
-        let notes = parser::body_parser(1.0,"".to_string());
+        let notes = parser::body_parser(&header,&mut lines)?;
         Ok(BMS { header: header, notes: notes })
     }
 }
@@ -32,7 +28,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn pass(){
-        
+    fn header_test(){
+        let t = BMS::load_from_file("testfiles/observer_spa.bms").unwrap();
+        println!("{:#?}",t.header);
     }
 }
