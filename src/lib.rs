@@ -34,7 +34,8 @@ mod tests {
     }
     #[test]
     fn notes_test(){
-        let t = BMS::load_from_file("testfiles/observer_spa.bms").unwrap();
-        println!("{:#?}",t.notes);
+        let t = BMS::load_from_file("testfiles/giselle_h.bme").unwrap();
+        //let t = BMS::load_from_file("testfiles/observer_spa.bms").unwrap();
+        println!("{:#?}",t.notes.get_bpm_changes());
     }
 }

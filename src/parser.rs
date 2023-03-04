@@ -26,9 +26,7 @@ pub fn header_parser(input_stream: &mut Lines<BufReader<File>>) -> Result<Header
     while let Some(Ok(t)) = input_stream.next(){
         if t.starts_with("#"){
             if let Some((command,arg)) = t.split_once(' '){
-                if let Err(e) = header.push(command,arg){
-                    println!("{}",e);
-                }
+                header.push(command,arg)?;
             }
 
         }
@@ -52,18 +50,17 @@ pub fn body_parser(header: &Header,input_stream: &mut Lines<BufReader<File>>) ->
                 if track_number=="02"{
                     notes.push(measure_number, track_number, serial)?;
                 }
-                else if track_number=="08"{
-                    notes.push(
-                        measure_number, 
-                        track_number, 
-                        &format!("{}",header.bpm_options
-                            .get(&u16::from_str_radix(serial, 36)?)
-                            .ok_or(BPMMissingError::BPMOption(serial.to_string()))?))?;
-                }   
                 else{
                     for i in (0..serial.len()).step_by(2){
                         let info = &serial[i..i+2];
                         if info != "00"{
+                            if track_number =="08"{
+                                let bpm = format!("{}",header.bpm_options
+                                    .get(&u16::from_str_radix(info, 36)?)
+                                    .ok_or(BPMMissingError::BPMOption(info.to_string()))?);
+                                notes.push(measure_number+i as f64/serial.len() as f64, track_number, &bpm)?;
+                                continue;
+                            }
                             notes.push(measure_number+i as f64/serial.len() as f64, track_number, info)?;
                         }
                     }

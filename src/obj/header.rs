@@ -46,7 +46,6 @@ impl Header{
 
     pub fn push(&mut self,command:&str,arg:&str) -> Result<(),ParseCommandError>{
         if command.starts_with("#BPM") && command != "#BPM"{
-            println!("{}",command);
             let id = match u16::from_str_radix(&command[4..6], 36){
                 Ok(a) => a,
                 _ => {return Err(ParseCommandError(format!("{} {}",command,arg)))}
