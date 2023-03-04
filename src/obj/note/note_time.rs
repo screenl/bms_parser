@@ -67,7 +67,7 @@ impl NoteTimeMap{
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct NoteTime{
     pub measure_notation: f64,
-    pub real_time_ms: f64,
+    pub real_time_ms: Option<f64>,
 }
 
 impl PartialOrd for NoteTime {

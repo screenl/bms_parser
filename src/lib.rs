@@ -8,7 +8,7 @@ pub mod parser;
 
 
 
-struct BMS{
+pub struct BMS{
     pub header: obj::header::Header,
     pub notes: obj::note::Notes,
 }
@@ -31,5 +31,10 @@ mod tests {
     fn header_test(){
         let t = BMS::load_from_file("testfiles/observer_spa.bms").unwrap();
         println!("{:#?}",t.header);
+    }
+    #[test]
+    fn notes_test(){
+        let t = BMS::load_from_file("testfiles/observer_spa.bms").unwrap();
+        println!("{:#?}",t.notes);
     }
 }

@@ -19,7 +19,7 @@ pub struct Header{
     pub stage_file: Option<PathBuf>,
     pub banner: Option<PathBuf>,
     pub wav_files: HashMap<u16, String>,
-    pub bmp_files: HashMap<u16, PathBuf>,
+    pub bmp_files: HashMap<u16, String>,
     pub bpm_options: HashMap<u16, f64>,
 
 }
@@ -46,6 +46,24 @@ impl Header{
 
     pub fn push(&mut self,command:&str,arg:&str) -> Result<(),ParseCommandError>{
 
+        if command.starts_with("#BPM"){
+            let id = match u16::from_str_radix(&command[4..6], 36){
+                Ok(a) => a,
+                _ => {return Err(ParseCommandError(format!("{} {}",command,arg)))}
+            };
+            self.bpm_options.insert(id, arg.parse().map_err(|_| ParseCommandError(format!("{} {}",command,arg)))?);
+            return Ok(())
+        }
+
+        if command.starts_with("#BMP"){
+            let id = match u16::from_str_radix(&command[4..6], 36){
+                Ok(a) => a,
+                _ => {return Err(ParseCommandError(format!("{} {}",command,arg)))}
+            };
+            self.bmp_files.insert(id, arg.to_string());
+            return Ok(())
+        }
+
         if command.starts_with("#WAV"){
             let id = match u16::from_str_radix(&command[4..6], 36){
                 Ok(a) => a,
@@ -55,6 +73,7 @@ impl Header{
             self.wav_files.insert(id, name.ok_or(ParseCommandError(format!("{} {}",command,arg)))?.0.to_string());
             return Ok(())
         }
+
         let arg = arg.to_string();
         match command{
             "#TITLE" => self.title = Some(arg),

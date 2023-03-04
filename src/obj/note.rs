@@ -1,3 +1,5 @@
+use self::note_time::NoteTime;
+
 mod note_time;
 
 #[derive(Debug,Clone)]
@@ -6,6 +8,7 @@ pub enum BGAType{
     Layer,
     Poor,
 }
+
 #[derive(Debug,Clone)]
 pub enum NoteAction{
     BGAChange {bga_type: BGAType,id:u16},
@@ -13,7 +16,7 @@ pub enum NoteAction{
     SigChange {length: f64},
     BGM {id: u16},
     Note {id: u16, track: u16},
-    LongNote {id: u32, track: u32, end_time: note_time::NoteTime}
+    LongNote {id: u32, track: u32, end_time: Option<note_time::NoteTime>}
 
 }
 
@@ -75,15 +78,34 @@ impl Notes{
             self.note_time_map.push(&t);
         }
     }
+    
+    pub fn push(&mut self, measure_number:f64 , track_number: &str, info: &str) -> Result<(),Box<dyn std::error::Error>>{
+        let note_time = NoteTime { measure_notation: measure_number, real_time_ms: None };
+        self.notes.push(Note {note_action: 
+            match track_number{
+                "01" => NoteAction::BGM { id: u16::from_str_radix(info, 36)?.try_into()?},
+                "02" => NoteAction::SigChange { length: info.parse()? },
+                "03" => NoteAction::BPMChange { bpm: u16::from_str_radix(info, 16)?.try_into()? },
+                "04" => NoteAction::BGAChange { bga_type: BGAType::Base, id: u16::from_str_radix(info, 36)? }, 
+                "06" => NoteAction::BGAChange { bga_type: BGAType::Poor, id: u16::from_str_radix(info, 36)? },
+                "07" => NoteAction::BGAChange { bga_type: BGAType::Layer, id: u16::from_str_radix(info, 36)?},
+                "08" => NoteAction::BPMChange { bpm: info.parse()? } ,
+                _ => return Ok(())
+        }, note_time});
+        Ok(())
+    }
 
     pub fn sort(&mut self){
         self.notes.sort_unstable_by(|x,y| x.note_time.partial_cmp(&y.note_time).unwrap());
     }
 
     pub fn update_time(&mut self){
+        self.sort();
         self.calculate_time_map();
         for i in 0..self.notes.len(){
-            self.notes[i].note_time.real_time_ms = self.note_time_map.get(&self.notes[i].note_time);
+            if let None = self.notes[i].note_time.real_time_ms{
+                self.notes[i].note_time.real_time_ms = Some(self.note_time_map.get(&self.notes[i].note_time));
+            }
         }
     }
 }
@@ -105,13 +127,13 @@ mod tests{
     fn time_test(){
         let mut ntm = note_time::NoteTimeMap::new(280.0,2.0);
         let mut notes = Vec::new();
-        notes.push(Note{ note_action: NoteAction::SigChange { length: 0.5 }, note_time: note_time::NoteTime { measure_notation: 1.0, real_time_ms: -1.0 } });
-        notes.push(Note{ note_action: NoteAction::SigChange { length: 4.0 }, note_time: note_time::NoteTime { measure_notation: 1.0, real_time_ms: -1.0 } });
-        notes.push(Note{ note_action: NoteAction::BPMChange { bpm: 230.0 }, note_time: note_time::NoteTime{measure_notation: 2.0, real_time_ms: -1.0} });
-        notes.push(Note{ note_action: NoteAction::SigChange { length: 0.2 }, note_time: note_time::NoteTime { measure_notation: 3.0, real_time_ms: -1.0 } });
+        notes.push(Note{ note_action: NoteAction::SigChange { length: 0.5 }, note_time: note_time::NoteTime { measure_notation: 1.0, real_time_ms: None } });
+        notes.push(Note{ note_action: NoteAction::SigChange { length: 4.0 }, note_time: note_time::NoteTime { measure_notation: 1.0, real_time_ms: None } });
+        notes.push(Note{ note_action: NoteAction::BPMChange { bpm: 230.0 }, note_time: note_time::NoteTime{measure_notation: 2.0, real_time_ms: None} });
+        notes.push(Note{ note_action: NoteAction::SigChange { length: 0.2 }, note_time: note_time::NoteTime { measure_notation: 3.0, real_time_ms: None } });
         for i in &notes{ntm.push(&i);}
         println!("{:?}",&ntm);
-        let time = ntm.get(&note_time::NoteTime { measure_notation: 3.5, real_time_ms: -1.0 });
+        let time = ntm.get(&note_time::NoteTime { measure_notation: 3.5, real_time_ms: None });
         println!("{}",time);
     }
 
