@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
 use crate::specs::*;
 
@@ -16,8 +16,8 @@ pub struct Header{
     pub difficulty: Option<Difficulty>,
     pub total: Option<f64>,
     pub ln_type: Option<LnType>,
-    pub stage_file: Option<PathBuf>,
-    pub banner: Option<PathBuf>,
+    pub stage_file: Option<String>,
+    pub banner: Option<String>,
     pub wav_files: HashMap<u16, String>,
     pub bmp_files: HashMap<u16, String>,
     pub bpm_options: HashMap<u16, f64>,
@@ -120,6 +120,8 @@ impl Header{
                 Ok(u) => u,
                 _ => {return Err(ParseCommandError(format!("{} {}",command,arg)))} 
             }),
+            "#STAGEFILE" => self.stage_file = Some(arg),
+            "#BANNER" => self.banner = Some(arg),
             _ => {}
         }
         //match command
